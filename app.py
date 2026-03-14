@@ -131,6 +131,16 @@ if os.path.exists(file_name):
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
+# ---------- VIEW SAVED FARMER DATA ----------
+
+if os.path.exists(file_name):
+
+    st.subheader("Saved Farmer Records")
+
+    data = pd.read_excel(file_name)
+
+    st.dataframe(data, use_container_width=True)
+
 # ---------- RECEIPT ----------
 
 def generate_pdf():
