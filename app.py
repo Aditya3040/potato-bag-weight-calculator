@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 from fpdf import FPDF
+from datetime import date
 
 st.set_page_config(page_title="Potato Bag Weight Calculator", layout="wide")
 
@@ -18,16 +19,29 @@ st.divider()
 
 # ---------------- FARMER INFO ----------------
 
+st.subheader("Farmer Information")
+
 c1,c2,c3 = st.columns(3)
 
 with c1:
     farmer = st.text_input("Farmer Name")
 
 with c2:
-    village = st.text_input("Village")
+    farmer_id = st.text_input("Farmer ID")
 
 with c3:
+    contact = st.text_input("Contact Number")
+
+c4,c5,c6 = st.columns(3)
+
+with c4:
+    village = st.text_input("Village")
+
+with c5:
     bill = st.text_input("Bill Number")
+
+with c6:
+    selected_date = st.date_input("Date", value=date.today())
 
 st.divider()
 
@@ -59,16 +73,12 @@ st.session_state.table = edited
 
 # ---------------- CALCULATIONS ----------------
 
-# total of each bag column
 bag_totals = edited.sum(axis=0)
 
-# total weight
 total_weight = edited.values.sum()
 
-# each weight entry = one bag
 total_bags = (edited > 0).sum().sum()
 
-# show total row
 display = edited.copy()
 display.loc["Total"] = bag_totals
 
@@ -78,6 +88,33 @@ st.write("### Total Bags:", total_bags)
 st.write("### Total Weight (kg):", total_weight)
 
 st.divider()
+
+# ---------------- SAVE FARMER RECORD ----------------
+
+if st.button("Save Farmer Data to Excel"):
+
+    record = {
+        "Farmer Name": farmer,
+        "Farmer ID": farmer_id,
+        "Contact": contact,
+        "Village": village,
+        "Bill Number": bill,
+        "Date": selected_date,
+        "Total Bags": total_bags,
+        "Total Weight": total_weight
+    }
+
+    df_record = pd.DataFrame([record])
+
+    file_name = "farmer_records.xlsx"
+
+    if os.path.exists(file_name):
+        old = pd.read_excel(file_name)
+        df_record = pd.concat([old, df_record], ignore_index=True)
+
+    df_record.to_excel(file_name, index=False)
+
+    st.success("Farmer data saved to Excel successfully")
 
 # ---------------- RECEIPT ----------------
 
@@ -96,9 +133,12 @@ def generate_pdf():
 
     pdf.set_font("Arial","",12)
 
-    pdf.cell(0,10,f"Farmer: {farmer}",0,1)
+    pdf.cell(0,10,f"Farmer Name: {farmer}",0,1)
+    pdf.cell(0,10,f"Farmer ID: {farmer_id}",0,1)
+    pdf.cell(0,10,f"Contact: {contact}",0,1)
     pdf.cell(0,10,f"Village: {village}",0,1)
-    pdf.cell(0,10,f"Bill: {bill}",0,1)
+    pdf.cell(0,10,f"Bill Number: {bill}",0,1)
+    pdf.cell(0,10,f"Date: {selected_date}",0,1)
 
     pdf.ln(5)
 
