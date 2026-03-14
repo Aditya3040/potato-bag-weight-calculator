@@ -3,11 +3,11 @@ import pandas as pd
 import os
 from fpdf import FPDF
 
-st.set_page_config(page_title="Potato Bag Weight Calculator", layout="wide")
+st.set_page_config(page_title="Potato Bag Calculator", layout="wide")
 
-# -----------------------
+# -------------------
 # HEADER
-# -----------------------
+# -------------------
 if os.path.exists("logo.png"):
     st.image("logo.png", width=220)
 
@@ -17,9 +17,9 @@ st.markdown("<p style='text-align:center;'>PepsiCo India Holdings Pvt Ltd</p>", 
 
 st.divider()
 
-# -----------------------
-# FARMER DETAILS
-# -----------------------
+# -------------------
+# FARMER INFO
+# -------------------
 st.subheader("Farmer Information")
 
 c1,c2,c3 = st.columns(3)
@@ -46,19 +46,26 @@ with c6:
 
 st.divider()
 
-# -----------------------
+# -------------------
 # BAG TABLE
-# each row = 10 bags
-# -----------------------
-rows = 100   # 100 rows = 1000 bags
+# -------------------
+rows = 100
 
 columns = ["W1","W2","W3","W4","W5","W6","W7","W8","W9","W10"]
 
-df = pd.DataFrame(0, index=range(1,rows+1), columns=columns)
+if "table" not in st.session_state:
+    st.session_state.table = pd.DataFrame(
+        0,
+        index=range(1,rows+1),
+        columns=columns
+    )
+
+df = st.session_state.table.copy()
 
 df.index.name = "Row"
 
-df["Bag Total"] = 0
+# calculate totals
+df["Bag Total"] = df[columns].sum(axis=1)
 
 st.subheader("Potato Bag Weight Entry")
 
@@ -69,26 +76,26 @@ edited = st.data_editor(
     disabled=["Bag Total"]
 )
 
-# -----------------------
+# save back to session
+st.session_state.table = edited[columns]
+
+# -------------------
 # CALCULATIONS
-# -----------------------
-weight_cols = columns
+# -------------------
+bag_totals = edited[columns].sum(axis=1)
 
-edited["Bag Total"] = edited[weight_cols].sum(axis=1)
+total_weight = bag_totals.sum()
 
-total_weight = edited["Bag Total"].sum()
+total_bags = (edited[columns] > 0).sum().sum()
 
-# count bags with weight
-bag_count = (edited[weight_cols] > 0).sum().sum()
-
-st.write("### Total Bags:", bag_count)
+st.write("### Total Bags:", total_bags)
 st.write("### Total Weight (kg):", total_weight)
 
 st.divider()
 
-# -----------------------
+# -------------------
 # SAVE RECORD
-# -----------------------
+# -------------------
 if st.button("Save Farmer Record"):
 
     record = {
@@ -96,7 +103,7 @@ if st.button("Save Farmer Record"):
         "Village": village,
         "Contact": contact,
         "Bill": bill,
-        "Total Bags": bag_count,
+        "Total Bags": total_bags,
         "Total Weight": total_weight
     }
 
@@ -110,9 +117,9 @@ if st.button("Save Farmer Record"):
 
     st.success("Farmer Record Saved")
 
-# -----------------------
-# PRINT RECEIPT
-# -----------------------
+# -------------------
+# RECEIPT
+# -------------------
 def generate_pdf():
 
     pdf = FPDF()
@@ -140,7 +147,7 @@ def generate_pdf():
 
     pdf.ln(10)
 
-    pdf.cell(0,10,f"Total Bags: {bag_count}",0,1)
+    pdf.cell(0,10,f"Total Bags: {total_bags}",0,1)
     pdf.cell(0,10,f"Total Weight: {total_weight} kg",0,1)
 
     pdf.output("receipt.pdf")
@@ -150,6 +157,7 @@ if st.button("Print Receipt"):
     generate_pdf()
 
     with open("receipt.pdf","rb") as f:
+
         st.download_button(
             "Download Receipt",
             data=f,
