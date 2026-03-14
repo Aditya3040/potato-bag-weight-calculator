@@ -59,12 +59,16 @@ df = pd.DataFrame(0, index=range(1, rows+1), columns=cols)
 
 df.index.name = "Bag"
 
+# add bag total column
+df["Bag Total"] = 0
+
 st.subheader("Potato Bag Weight Entry")
 
 edited = st.data_editor(
     df,
     use_container_width=True,
     num_rows="fixed",
+    disabled=["Bag Total"]
 )
 
 # ======================
@@ -73,30 +77,14 @@ edited = st.data_editor(
 
 weight_cols = cols
 
-bag_totals = edited.sum(axis=1)
+edited["Bag Total"] = edited[weight_cols].sum(axis=1)
 
-result = edited.copy()
-result["Bag Total"] = bag_totals
+total_bags = (edited["Bag Total"] > 0).sum()
 
-# count bags where weight entered
-total_bags = (bag_totals > 0).sum()
+total_weight = edited["Bag Total"].sum()
 
-# overall weight
-total_weight = bag_totals.sum()
-
-st.subheader("Bag Table With Totals")
-
-st.dataframe(result, use_container_width=True)
-
-st.divider()
-
-# ======================
-# FINAL RESULT
-# ======================
-
-st.markdown(f"### Total Bags: **{total_bags}**")
-
-st.markdown(f"### Total Weight (kg): **{total_weight}**")
+st.write("### Total Bags:", total_bags)
+st.write("### Total Weight (kg):", total_weight)
 
 st.divider()
 
