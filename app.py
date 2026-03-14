@@ -3,102 +3,99 @@ import pandas as pd
 import os
 from fpdf import FPDF
 
-st.set_page_config(page_title="Potato Bag Calculator", layout="wide")
+st.set_page_config(page_title="Potato Bag Weight Calculator", layout="wide")
 
-# ======================
+# ---------------------------
 # HEADER
-# ======================
-
+# ---------------------------
 if os.path.exists("logo.png"):
-    st.image("logo.png", width=250)
+    st.image("logo.png", width=220)
 
-st.markdown("<h1 style='text-align:center;'>SOHAM TRADERS</h1>", unsafe_allow_html=True)
-st.markdown("<h4 style='text-align:center;'>Mob - 9763916101 / 9021653848</h4>", unsafe_allow_html=True)
-st.markdown("<h3 style='text-align:center;'>PepsiCo India Holdings Pvt Ltd</h3>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align:center;'>SOHAM TRADERS</h2>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center;'>Mob - 9763916101 / 9021653848</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center;'>PepsiCo India Holdings Pvt Ltd</p>", unsafe_allow_html=True)
 
 st.divider()
 
-# ======================
-# FARMER INFO
-# ======================
-
+# ---------------------------
+# FARMER SEARCH / ENTRY
+# ---------------------------
 st.subheader("Farmer Information")
+
+if os.path.exists("farmers_record.csv"):
+    db = pd.read_csv("farmers_record.csv")
+else:
+    db = pd.DataFrame(columns=["Farmer","Village","Contact","Bill"])
+
+search = st.text_input("Search Farmer")
+
+if search:
+    results = db[db["Farmer"].str.contains(search, case=False, na=False)]
+    st.dataframe(results)
 
 c1,c2,c3 = st.columns(3)
 
 with c1:
-    farmer_name = st.text_input("Farmer Name")
+    farmer = st.text_input("Farmer Name")
 
 with c2:
-    farmer_id = st.text_input("Farmer ID")
+    village = st.text_input("Village")
 
 with c3:
-    contact = st.text_input("Contact Number")
+    contact = st.text_input("Contact")
 
-c4,c5,c6 = st.columns(3)
-
-with c4:
-    village = st.text_input("Village Name")
-
-with c5:
-    bill_no = st.text_input("Bill Number")
-
-with c6:
-    date = st.date_input("Date")
+bill = st.text_input("Bill Number")
 
 st.divider()
 
-# ======================
-# POTATO BAG TABLE
-# ======================
+# ---------------------------
+# CREATE BAG TABLE
+# ---------------------------
+bags = 1000
+cols = ["W1","W2","W3","W4","W5","W6","W7","W8","W9","W10"]
+
+df = pd.DataFrame(0, index=range(1, bags+1), columns=cols)
+df.index.name = "Bag"
 
 st.subheader("Potato Bag Weight Entry")
 
-bags = 1000
-
-columns = ["Bag","W1","W2","W3","W4","W5","W6","W7","W8","W9","W10","Bag Total"]
-
-data = []
-
-for i in range(1,bags+1):
-    row = [i,0,0,0,0,0,0,0,0,0,0,0]
-    data.append(row)
-
-df = pd.DataFrame(data,columns=columns)
-
-edited_df = st.data_editor(
+edited = st.data_editor(
     df,
     use_container_width=True,
-    disabled=["Bag","Bag Total"]
+    num_rows="fixed",
+    column_config={
+        c: st.column_config.NumberColumn(c, step=1) for c in cols
+    }
 )
 
-# ======================
-# CALCULATE BAG TOTAL
-# ======================
+# ---------------------------
+# LIVE TOTAL CALCULATION
+# ---------------------------
+bag_totals = edited.sum(axis=1)
+total_weight = bag_totals.sum()
 
-weight_cols = ["W1","W2","W3","W4","W5","W6","W7","W8","W9","W10"]
+result = edited.copy()
+result["Bag Total"] = bag_totals
 
-edited_df["Bag Total"] = edited_df[weight_cols].sum(axis=1)
+st.subheader("Live Bag Totals")
 
-total_weight = edited_df["Bag Total"].sum()
+st.dataframe(result, use_container_width=True)
 
-st.write("### Total Bags:",bags)
-st.write("### Total Weight (kg):",total_weight)
+st.write("### Total Bags:", bags)
+st.write("### Total Weight (kg):", total_weight)
 
 st.divider()
 
-# ======================
+# ---------------------------
 # SAVE FARMER RECORD
-# ======================
-
+# ---------------------------
 if st.button("Save Farmer Record"):
 
     record = {
-        "Farmer": farmer_name,
+        "Farmer": farmer,
         "Village": village,
         "Contact": contact,
-        "Bill": bill_no,
-        "Bags": bags,
+        "Bill": bill,
         "Total Weight": total_weight
     }
 
@@ -110,21 +107,33 @@ if st.button("Save Farmer Record"):
 
     df_record.to_csv("farmers_record.csv",index=False)
 
-    st.success("Record Saved Successfully")
+    st.success("Record Saved")
 
-# ======================
-# PDF RECEIPT
-# ======================
+# ---------------------------
+# EXCEL EXPORT
+# ---------------------------
+excel = result.copy()
+excel["Bag"] = excel.index
 
+st.download_button(
+    "Download Excel",
+    data=excel.to_csv(index=False),
+    file_name="potato_bag_weights.csv",
+    mime="text/csv"
+)
+
+# ---------------------------
+# PROFESSIONAL RECEIPT
+# ---------------------------
 def generate_pdf():
 
     pdf = FPDF()
     pdf.add_page()
 
     if os.path.exists("logo.png"):
-        pdf.image("logo.png",x=60,y=8,w=90)
+        pdf.image("logo.png", x=60, y=8, w=90)
 
-    pdf.ln(50)
+    pdf.ln(45)
 
     pdf.set_font("Arial","B",16)
     pdf.cell(0,10,"SOHAM TRADERS",0,1,"C")
@@ -135,10 +144,10 @@ def generate_pdf():
 
     pdf.ln(10)
 
-    pdf.cell(0,10,f"Farmer: {farmer_name}",0,1)
+    pdf.cell(0,10,f"Farmer: {farmer}",0,1)
     pdf.cell(0,10,f"Village: {village}",0,1)
     pdf.cell(0,10,f"Contact: {contact}",0,1)
-    pdf.cell(0,10,f"Bill: {bill_no}",0,1)
+    pdf.cell(0,10,f"Bill: {bill}",0,1)
 
     pdf.ln(10)
 
@@ -152,7 +161,6 @@ if st.button("Generate Receipt"):
     generate_pdf()
 
     with open("receipt.pdf","rb") as f:
-
         st.download_button(
             "Download Receipt",
             data=f,
