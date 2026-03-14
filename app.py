@@ -6,7 +6,7 @@ from datetime import date
 
 st.set_page_config(page_title="Potato Bag Weight Calculator", layout="wide")
 
-# ---------------- HEADER ----------------
+# ---------- HEADER ----------
 
 if os.path.exists("logo.png"):
     st.image("logo.png", width=200)
@@ -17,7 +17,7 @@ st.markdown("PepsiCo India Holdings Pvt Ltd")
 
 st.divider()
 
-# ---------------- FARMER INFO ----------------
+# ---------- FARMER INFO ----------
 
 st.subheader("Farmer Information")
 
@@ -45,48 +45,53 @@ with c6:
 
 st.divider()
 
-# ---------------- TABLE STRUCTURE ----------------
-
-bags = 500
-rows = ["W1","W2","W3","W4","W5","W6","W7","W8","W9","W10"]
-columns = [str(i) for i in range(1, bags+1)]
-
-# initialize table once
-if "table_data" not in st.session_state:
-    st.session_state.table_data = pd.DataFrame(
-        0,
-        index=rows,
-        columns=columns
-    )
+# ---------- BAG ENTRY ----------
 
 st.subheader("Potato Bag Weight Entry")
 
-edited = st.data_editor(
-    st.session_state.table_data,
-    key="bag_table",
-    use_container_width=True
-)
+bags = st.number_input("Number of Bags", 1, 2000, 20)
 
-# update session state
-st.session_state.table_data = edited
+if "weights" not in st.session_state:
+    st.session_state.weights = {}
 
-# ---------------- CALCULATIONS ----------------
+total_weight = 0
+total_bags = 0
 
-bag_totals = edited.sum(axis=0)
-total_weight = edited.values.sum()
-total_bags = (edited > 0).sum().sum()
+for bag in range(1, bags + 1):
 
-display = edited.copy()
-display.loc["Total"] = bag_totals
+    cols = st.columns(10)
 
-st.dataframe(display, use_container_width=True)
+    bag_total = 0
+
+    for i in range(1, 11):
+
+        key = f"{bag}_{i}"
+
+        val = cols[i-1].text_input(
+            f"W{i}",
+            key=key,
+            placeholder="0",
+        )
+
+        try:
+            weight = float(val)
+            bag_total += weight
+            total_weight += weight
+            if weight > 0:
+                total_bags += 1
+        except:
+            weight = 0
+
+    st.write(f"**Bag {bag} Total:** {bag_total}")
+
+st.divider()
 
 st.write("### Total Bags:", total_bags)
 st.write("### Total Weight (kg):", total_weight)
 
 st.divider()
 
-# ---------------- SAVE FARMER RECORD ----------------
+# ---------- SAVE FARMER DATA ----------
 
 if st.button("Save Farmer Data to Excel"):
 
@@ -110,9 +115,9 @@ if st.button("Save Farmer Data to Excel"):
 
     df_record.to_excel(file_name, index=False)
 
-    st.success("Farmer data saved to Excel successfully")
+    st.success("Farmer data saved successfully")
 
-# ---------------- RECEIPT ----------------
+# ---------- RECEIPT ----------
 
 def generate_pdf():
 
