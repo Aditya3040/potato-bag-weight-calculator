@@ -4,13 +4,14 @@ from datetime import datetime
 from fpdf import FPDF
 import os
 
-st.set_page_config(page_title="Potato Bag Calculator", layout="wide")
+st.set_page_config(page_title="Potato Bag Weight Calculator", layout="wide")
 
 # =========================
-# HEADER WITH LOGO
+# HEADER
 # =========================
 
-st.image("logo.png", width=250)
+if os.path.exists("logo.png"):
+    st.image("logo.png", width=250)
 
 st.markdown("<h1 style='text-align:center;'>SOHAM TRADERS</h1>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align:center;'>Mob - 9763916101 / 9021653848</h4>", unsafe_allow_html=True)
@@ -123,7 +124,7 @@ if st.button("Save Farmer Record"):
     st.success("Farmer Record Saved Successfully")
 
 # =========================
-# PDF RECEIPT GENERATOR
+# PDF RECEIPT FUNCTION
 # =========================
 
 def generate_pdf():
@@ -131,8 +132,8 @@ def generate_pdf():
     pdf = FPDF()
     pdf.add_page()
 
-    # Logo
-    pdf.image("logo.png", x=60, y=8, w=90)
+    if os.path.exists("logo.png"):
+        pdf.image("logo.png", x=60, y=8, w=90)
 
     pdf.ln(50)
 
@@ -160,7 +161,7 @@ def generate_pdf():
     pdf.output("receipt.pdf")
 
 # =========================
-# GENERATE RECEIPT BUTTON
+# GENERATE RECEIPT
 # =========================
 
 if st.button("Generate Printable Receipt"):
