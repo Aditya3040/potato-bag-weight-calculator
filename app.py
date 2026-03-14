@@ -1,13 +1,13 @@
 import streamlit as st
 import pandas as pd
 import os
+from fpdf import FPDF
 
 st.set_page_config(page_title="Potato Bag Weight Calculator", layout="wide")
 
-# ======================
+# -----------------------
 # HEADER
-# ======================
-
+# -----------------------
 if os.path.exists("logo.png"):
     st.image("logo.png", width=220)
 
@@ -17,10 +17,9 @@ st.markdown("<p style='text-align:center;'>PepsiCo India Holdings Pvt Ltd</p>", 
 
 st.divider()
 
-# ======================
+# -----------------------
 # FARMER DETAILS
-# ======================
-
+# -----------------------
 st.subheader("Farmer Information")
 
 c1,c2,c3 = st.columns(3)
@@ -47,19 +46,18 @@ with c6:
 
 st.divider()
 
-# ======================
+# -----------------------
 # BAG TABLE
-# ======================
+# each row = 10 bags
+# -----------------------
+rows = 100   # 100 rows = 1000 bags
 
-rows = 1000
+columns = ["W1","W2","W3","W4","W5","W6","W7","W8","W9","W10"]
 
-cols = ["W1","W2","W3","W4","W5","W6","W7","W8","W9","W10"]
+df = pd.DataFrame(0, index=range(1,rows+1), columns=columns)
 
-df = pd.DataFrame(0, index=range(1, rows+1), columns=cols)
+df.index.name = "Row"
 
-df.index.name = "Bag"
-
-# add bag total column
 df["Bag Total"] = 0
 
 st.subheader("Potato Bag Weight Entry")
@@ -71,27 +69,26 @@ edited = st.data_editor(
     disabled=["Bag Total"]
 )
 
-# ======================
+# -----------------------
 # CALCULATIONS
-# ======================
-
-weight_cols = cols
+# -----------------------
+weight_cols = columns
 
 edited["Bag Total"] = edited[weight_cols].sum(axis=1)
 
-total_bags = (edited["Bag Total"] > 0).sum()
-
 total_weight = edited["Bag Total"].sum()
 
-st.write("### Total Bags:", total_bags)
+# count bags with weight
+bag_count = (edited[weight_cols] > 0).sum().sum()
+
+st.write("### Total Bags:", bag_count)
 st.write("### Total Weight (kg):", total_weight)
 
 st.divider()
 
-# ======================
+# -----------------------
 # SAVE RECORD
-# ======================
-
+# -----------------------
 if st.button("Save Farmer Record"):
 
     record = {
@@ -99,16 +96,63 @@ if st.button("Save Farmer Record"):
         "Village": village,
         "Contact": contact,
         "Bill": bill,
-        "Total Bags": total_bags,
+        "Total Bags": bag_count,
         "Total Weight": total_weight
     }
 
-    rec_df = pd.DataFrame([record])
+    rec = pd.DataFrame([record])
 
     if os.path.exists("farmers_record.csv"):
         old = pd.read_csv("farmers_record.csv")
-        rec_df = pd.concat([old,rec_df])
+        rec = pd.concat([old,rec])
 
-    rec_df.to_csv("farmers_record.csv", index=False)
+    rec.to_csv("farmers_record.csv",index=False)
 
-    st.success("Farmer Record Saved Successfully")
+    st.success("Farmer Record Saved")
+
+# -----------------------
+# PRINT RECEIPT
+# -----------------------
+def generate_pdf():
+
+    pdf = FPDF()
+    pdf.add_page()
+
+    if os.path.exists("logo.png"):
+        pdf.image("logo.png", x=60, y=8, w=90)
+
+    pdf.ln(45)
+
+    pdf.set_font("Arial","B",16)
+    pdf.cell(0,10,"SOHAM TRADERS",0,1,"C")
+
+    pdf.set_font("Arial","",12)
+    pdf.cell(0,10,"Mob - 9763916101 / 9021653848",0,1,"C")
+    pdf.cell(0,10,"PepsiCo India Holdings Pvt Ltd",0,1,"C")
+
+    pdf.ln(10)
+
+    pdf.cell(0,10,f"Farmer: {farmer}",0,1)
+    pdf.cell(0,10,f"Village: {village}",0,1)
+    pdf.cell(0,10,f"Contact: {contact}",0,1)
+    pdf.cell(0,10,f"Bill: {bill}",0,1)
+    pdf.cell(0,10,f"Date: {date}",0,1)
+
+    pdf.ln(10)
+
+    pdf.cell(0,10,f"Total Bags: {bag_count}",0,1)
+    pdf.cell(0,10,f"Total Weight: {total_weight} kg",0,1)
+
+    pdf.output("receipt.pdf")
+
+if st.button("Print Receipt"):
+
+    generate_pdf()
+
+    with open("receipt.pdf","rb") as f:
+        st.download_button(
+            "Download Receipt",
+            data=f,
+            file_name="receipt.pdf",
+            mime="application/pdf"
+        )
