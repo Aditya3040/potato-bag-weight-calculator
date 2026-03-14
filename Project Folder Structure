@@ -1,0 +1,6 @@
+potato_bag_calculator
+│
+├── app.py
+├── logo.png
+├── farmers_record.csv
+└── requirements.txt
