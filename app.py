@@ -48,35 +48,32 @@ st.divider()
 # ---------------- TABLE STRUCTURE ----------------
 
 bags = 500
-
 rows = ["W1","W2","W3","W4","W5","W6","W7","W8","W9","W10"]
+columns = [str(i) for i in range(1, bags+1)]
 
-columns = [str(i) for i in range(1,bags+1)]
-
-if "table" not in st.session_state:
-    st.session_state.table = pd.DataFrame(
+# initialize table once
+if "table_data" not in st.session_state:
+    st.session_state.table_data = pd.DataFrame(
         0,
         index=rows,
         columns=columns
     )
 
-df = st.session_state.table.copy()
-
 st.subheader("Potato Bag Weight Entry")
 
 edited = st.data_editor(
-    df,
+    st.session_state.table_data,
+    key="bag_table",
     use_container_width=True
 )
 
-st.session_state.table = edited
+# update session state
+st.session_state.table_data = edited
 
 # ---------------- CALCULATIONS ----------------
 
 bag_totals = edited.sum(axis=0)
-
 total_weight = edited.values.sum()
-
 total_bags = (edited > 0).sum().sum()
 
 display = edited.copy()
@@ -105,7 +102,6 @@ if st.button("Save Farmer Data to Excel"):
     }
 
     df_record = pd.DataFrame([record])
-
     file_name = "farmer_records.xlsx"
 
     if os.path.exists(file_name):
