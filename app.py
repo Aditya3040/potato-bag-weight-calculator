@@ -93,6 +93,8 @@ st.divider()
 
 # ---------- SAVE FARMER DATA ----------
 
+file_name = "farmer_records.xlsx"
+
 if st.button("Save Farmer Data to Excel"):
 
     record = {
@@ -107,7 +109,6 @@ if st.button("Save Farmer Data to Excel"):
     }
 
     df_record = pd.DataFrame([record])
-    file_name = "farmer_records.xlsx"
 
     if os.path.exists(file_name):
         old = pd.read_excel(file_name)
@@ -116,6 +117,19 @@ if st.button("Save Farmer Data to Excel"):
     df_record.to_excel(file_name, index=False)
 
     st.success("Farmer data saved successfully")
+
+# ---------- DOWNLOAD EXCEL ----------
+
+if os.path.exists(file_name):
+
+    with open(file_name, "rb") as f:
+
+        st.download_button(
+            "Download Farmer Records Excel",
+            data=f,
+            file_name="farmer_records.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
 # ---------- RECEIPT ----------
 
