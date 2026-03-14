@@ -42,41 +42,24 @@ with col6:
 
 st.divider()
 
-# BAG ENTRY
+# BAG INPUT TABLE
 st.subheader("Potato Bag Weight Entry")
 
-bags = st.number_input("Number of Bags", min_value=1, max_value=100, value=5)
+bags = st.number_input("Number of Bags", min_value=1, max_value=1000, value=20)
 
-total_weight = 0
+columns = ["W1","W2","W3","W4","W5","W6","W7","W8","W9","W10"]
 
-for bag in range(1, bags+1):
+df = pd.DataFrame(0, index=range(bags), columns=columns)
 
-    st.markdown(f"### Bag {bag}")
+edited_df = st.data_editor(df, use_container_width=True)
 
-    cols = st.columns(10)
+# BAG TOTAL
+edited_df["Bag Total"] = edited_df.sum(axis=1)
 
-    weights = []
+st.subheader("Bag Totals")
+st.dataframe(edited_df)
 
-    for i in range(10):
-
-        w = cols[i].text_input(
-            f"W{i+1}",
-            key=f"{bag}_{i}",
-            placeholder="kg"
-        )
-
-        try:
-            w = float(w)
-        except:
-            w = 0
-
-        weights.append(w)
-
-    bag_total = sum(weights)
-
-    st.success(f"Bag {bag} Total = {bag_total} kg")
-
-    total_weight += bag_total
+total_weight = edited_df["Bag Total"].sum()
 
 st.divider()
 
@@ -100,13 +83,13 @@ if st.button("Save Farmer Record"):
         "Weight": total_weight
     }
 
-    df = pd.DataFrame([data])
+    record = pd.DataFrame([data])
 
     if os.path.exists("farmers_record.csv"):
         old = pd.read_csv("farmers_record.csv")
-        df = pd.concat([old,df])
+        record = pd.concat([old,record])
 
-    df.to_csv("farmers_record.csv",index=False)
+    record.to_csv("farmers_record.csv",index=False)
 
     st.success("Record Saved Successfully")
 
@@ -130,7 +113,7 @@ def generate_pdf():
 
     pdf.ln(10)
 
-    pdf.cell(0,10,f"Farmer Name: {farmer_name}",0,1)
+    pdf.cell(0,10,f"Farmer: {farmer_name}",0,1)
     pdf.cell(0,10,f"Village: {village}",0,1)
     pdf.cell(0,10,f"Contact: {contact}",0,1)
     pdf.cell(0,10,f"Bill: {bill_no}",0,1)
