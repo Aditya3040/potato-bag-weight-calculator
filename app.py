@@ -51,6 +51,9 @@ st.subheader("Potato Bag Weight Entry")
 
 bags = st.number_input("Number of Bags", 1, 2000, 20)
 
+if "weights" not in st.session_state:
+    st.session_state.weights = {}
+
 total_weight = 0
 total_bags = 0
 
@@ -66,17 +69,15 @@ for bag in range(1, bags + 1):
         val = cols[i-1].text_input(
             f"W{i}",
             key=key,
-            placeholder="0"
+            placeholder="0",
         )
 
         try:
             weight = float(val)
             bag_total += weight
             total_weight += weight
-
             if weight > 0:
                 total_bags += 1
-
         except:
             weight = 0
 
@@ -148,60 +149,62 @@ def generate_pdf():
 
     # ---------- LOGO ----------
     if os.path.exists("logo.png"):
-        pdf.image("logo.png", x=70, y=10, w=70)
+        pdf.image("logo.png", x=75, y=10, w=60)
 
     pdf.ln(50)
 
-    # ---------- COMPANY ----------
-    pdf.set_font("Times","B",20)
+    # ---------- COMPANY NAME ----------
+    pdf.set_font("Arial","B",18)
     pdf.cell(0,10,"SOHAM TRADERS",0,1,"C")
 
-    pdf.set_font("Helvetica","",12)
+    pdf.set_font("Arial","",12)
     pdf.cell(0,8,"Mob: 9763916101 / 9021653848",0,1,"C")
     pdf.cell(0,8,"PepsiCo India Holdings Pvt Ltd",0,1,"C")
 
-    pdf.ln(8)
+    pdf.ln(10)
 
+    # ---------- LINE ----------
     pdf.set_draw_color(0,0,0)
     pdf.line(10,pdf.get_y(),200,pdf.get_y())
 
     pdf.ln(10)
 
     # ---------- FARMER DETAILS ----------
-    pdf.set_font("Times","B",14)
+    pdf.set_font("Arial","B",14)
     pdf.cell(0,10,"Farmer Details",0,1)
 
-    pdf.set_font("Helvetica","",12)
+    pdf.set_font("Arial","",12)
 
-    pdf.cell(50,8,"Farmer Name:")
+    pdf.cell(50,8,"Farmer Name:",0)
     pdf.cell(0,8,str(farmer),0,1)
 
-    pdf.cell(50,8,"Farmer ID:")
+    pdf.cell(50,8,"Farmer ID:",0)
     pdf.cell(0,8,str(farmer_id),0,1)
 
-    pdf.cell(50,8,"Contact:")
+    pdf.cell(50,8,"Contact:",0)
     pdf.cell(0,8,str(contact),0,1)
 
-    pdf.cell(50,8,"Village:")
+    pdf.cell(50,8,"Village:",0)
     pdf.cell(0,8,str(village),0,1)
 
-    pdf.cell(50,8,"Bill Number:")
+    pdf.cell(50,8,"Bill Number:",0)
     pdf.cell(0,8,str(bill),0,1)
 
-    pdf.cell(50,8,"Date:")
+    pdf.cell(50,8,"Date:",0)
     pdf.cell(0,8,str(selected_date),0,1)
 
     pdf.ln(10)
 
+    # ---------- LINE ----------
     pdf.line(10,pdf.get_y(),200,pdf.get_y())
 
     pdf.ln(10)
 
-    # ---------- TOTALS ----------
-    pdf.set_font("Times","B",14)
+    # ---------- TOTAL SECTION ----------
+    pdf.set_font("Arial","B",14)
     pdf.cell(0,10,"Weight Summary",0,1)
 
-    pdf.set_font("Helvetica","",12)
+    pdf.set_font("Arial","",12)
 
     pdf.cell(60,10,"Total Bags:",1,0)
     pdf.cell(0,10,str(total_bags),1,1)
@@ -211,12 +214,11 @@ def generate_pdf():
 
     pdf.ln(20)
 
-    pdf.set_font("Times","I",10)
+    # ---------- FOOTER ----------
+    pdf.set_font("Arial","I",10)
     pdf.cell(0,8,"Thank you for doing business with Soham Traders",0,1,"C")
 
     pdf.output("receipt.pdf")
-
-# ---------- PRINT RECEIPT ----------
 
 if st.button("Print Receipt"):
 
