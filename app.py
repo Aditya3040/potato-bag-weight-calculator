@@ -5,9 +5,9 @@ from fpdf import FPDF
 
 st.set_page_config(page_title="Potato Bag Calculator", layout="wide")
 
-# -------------------
+# ----------------
 # HEADER
-# -------------------
+# ----------------
 if os.path.exists("logo.png"):
     st.image("logo.png", width=220)
 
@@ -17,9 +17,9 @@ st.markdown("<p style='text-align:center;'>PepsiCo India Holdings Pvt Ltd</p>", 
 
 st.divider()
 
-# -------------------
+# ----------------
 # FARMER INFO
-# -------------------
+# ----------------
 st.subheader("Farmer Information")
 
 c1,c2,c3 = st.columns(3)
@@ -46,26 +46,26 @@ with c6:
 
 st.divider()
 
-# -------------------
-# BAG TABLE
-# -------------------
-rows = 100
+# ----------------
+# TABLE STRUCTURE
+# ----------------
 
-columns = ["W1","W2","W3","W4","W5","W6","W7","W8","W9","W10"]
+bags = 1000
+columns = ["R1","R2","R3","R4","R5","R6","R7","R8","R9","R10"]
 
 if "table" not in st.session_state:
+
     st.session_state.table = pd.DataFrame(
         0,
-        index=range(1,rows+1),
+        index=range(1,bags+1),
         columns=columns
     )
 
 df = st.session_state.table.copy()
-
-df.index.name = "Row"
+df.index.name = "Bag"
 
 # calculate totals
-df["Bag Total"] = df[columns].sum(axis=1)
+df["Bag Total"] = df.sum(axis=1)
 
 st.subheader("Potato Bag Weight Entry")
 
@@ -76,26 +76,28 @@ edited = st.data_editor(
     disabled=["Bag Total"]
 )
 
-# save back to session
+# save edits
 st.session_state.table = edited[columns]
 
-# -------------------
+# ----------------
 # CALCULATIONS
-# -------------------
+# ----------------
+
 bag_totals = edited[columns].sum(axis=1)
 
 total_weight = bag_totals.sum()
 
-total_bags = (edited[columns] > 0).sum().sum()
+total_bags = (bag_totals > 0).sum()
 
 st.write("### Total Bags:", total_bags)
 st.write("### Total Weight (kg):", total_weight)
 
 st.divider()
 
-# -------------------
+# ----------------
 # SAVE RECORD
-# -------------------
+# ----------------
+
 if st.button("Save Farmer Record"):
 
     record = {
@@ -117,9 +119,10 @@ if st.button("Save Farmer Record"):
 
     st.success("Farmer Record Saved")
 
-# -------------------
-# RECEIPT
-# -------------------
+# ----------------
+# PRINT RECEIPT
+# ----------------
+
 def generate_pdf():
 
     pdf = FPDF()
