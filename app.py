@@ -3,24 +3,20 @@ import pandas as pd
 import os
 from fpdf import FPDF
 
-st.set_page_config(page_title="Potato Bag Calculator", layout="wide")
+st.set_page_config(page_title="Potato Bag Weight Calculator", layout="wide")
 
-# ----------------
-# HEADER
-# ----------------
+# ---------------- HEADER ----------------
+
 if os.path.exists("logo.png"):
-    st.image("logo.png", width=220)
+    st.image("logo.png", width=200)
 
-st.markdown("<h2 style='text-align:center;'>SOHAM TRADERS</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center;'>Mob - 9763916101 / 9021653848</p>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center;'>PepsiCo India Holdings Pvt Ltd</p>", unsafe_allow_html=True)
+st.markdown("## SOHAM TRADERS")
+st.markdown("Mob - 9763916101 / 9021653848")
+st.markdown("PepsiCo India Holdings Pvt Ltd")
 
 st.divider()
 
-# ----------------
-# FARMER INFO
-# ----------------
-st.subheader("Farmer Information")
+# ---------------- FARMER INFO ----------------
 
 c1,c2,c3 = st.columns(3)
 
@@ -28,100 +24,62 @@ with c1:
     farmer = st.text_input("Farmer Name")
 
 with c2:
-    farmer_id = st.text_input("Farmer ID")
+    village = st.text_input("Village")
 
 with c3:
-    contact = st.text_input("Contact Number")
-
-c4,c5,c6 = st.columns(3)
-
-with c4:
-    village = st.text_input("Village Name")
-
-with c5:
     bill = st.text_input("Bill Number")
-
-with c6:
-    date = st.date_input("Date")
 
 st.divider()
 
-# ----------------
-# TABLE STRUCTURE
-# ----------------
+# ---------------- TABLE STRUCTURE ----------------
 
-bags = 1000
-columns = ["R1","R2","R3","R4","R5","R6","R7","R8","R9","R10"]
+bags = 500
+
+rows = ["W1","W2","W3","W4","W5","W6","W7","W8","W9","W10"]
+
+columns = [str(i) for i in range(1,bags+1)]
 
 if "table" not in st.session_state:
-
     st.session_state.table = pd.DataFrame(
         0,
-        index=range(1,bags+1),
+        index=rows,
         columns=columns
     )
 
 df = st.session_state.table.copy()
-df.index.name = "Bag"
-
-# calculate totals
-df["Bag Total"] = df.sum(axis=1)
 
 st.subheader("Potato Bag Weight Entry")
 
 edited = st.data_editor(
     df,
-    use_container_width=True,
-    num_rows="fixed",
-    disabled=["Bag Total"]
+    use_container_width=True
 )
 
-# save edits
-st.session_state.table = edited[columns]
+st.session_state.table = edited
 
-# ----------------
-# CALCULATIONS
-# ----------------
+# ---------------- CALCULATIONS ----------------
 
-bag_totals = edited[columns].sum(axis=1)
+# total of each bag column
+bag_totals = edited.sum(axis=0)
 
-total_weight = bag_totals.sum()
+# total weight
+total_weight = edited.values.sum()
 
-total_bags = (bag_totals > 0).sum()
+# each weight entry = one bag
+total_bags = (edited > 0).sum().sum()
+
+# show total row
+display = edited.copy()
+display.loc["Total"] = bag_totals
+
+st.dataframe(display, use_container_width=True)
 
 st.write("### Total Bags:", total_bags)
 st.write("### Total Weight (kg):", total_weight)
 
 st.divider()
 
-# ----------------
-# SAVE RECORD
-# ----------------
-
-if st.button("Save Farmer Record"):
-
-    record = {
-        "Farmer": farmer,
-        "Village": village,
-        "Contact": contact,
-        "Bill": bill,
-        "Total Bags": total_bags,
-        "Total Weight": total_weight
-    }
-
-    rec = pd.DataFrame([record])
-
-    if os.path.exists("farmers_record.csv"):
-        old = pd.read_csv("farmers_record.csv")
-        rec = pd.concat([old,rec])
-
-    rec.to_csv("farmers_record.csv",index=False)
-
-    st.success("Farmer Record Saved")
-
-# ----------------
-# PRINT RECEIPT
-# ----------------
+# ---------------- RECEIPT ----------------
 
 def generate_pdf():
 
@@ -129,26 +87,20 @@ def generate_pdf():
     pdf.add_page()
 
     if os.path.exists("logo.png"):
-        pdf.image("logo.png", x=60, y=8, w=90)
+        pdf.image("logo.png", x=60, y=10, w=80)
 
-    pdf.ln(45)
+    pdf.ln(40)
 
     pdf.set_font("Arial","B",16)
     pdf.cell(0,10,"SOHAM TRADERS",0,1,"C")
 
     pdf.set_font("Arial","",12)
-    pdf.cell(0,10,"Mob - 9763916101 / 9021653848",0,1,"C")
-    pdf.cell(0,10,"PepsiCo India Holdings Pvt Ltd",0,1,"C")
-
-    pdf.ln(10)
 
     pdf.cell(0,10,f"Farmer: {farmer}",0,1)
     pdf.cell(0,10,f"Village: {village}",0,1)
-    pdf.cell(0,10,f"Contact: {contact}",0,1)
     pdf.cell(0,10,f"Bill: {bill}",0,1)
-    pdf.cell(0,10,f"Date: {date}",0,1)
 
-    pdf.ln(10)
+    pdf.ln(5)
 
     pdf.cell(0,10,f"Total Bags: {total_bags}",0,1)
     pdf.cell(0,10,f"Total Weight: {total_weight} kg",0,1)
